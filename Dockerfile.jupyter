@@ -61,6 +61,9 @@ RUN mkdir ${HOME}/conda
 RUN ${HOME}/Miniconda3-latest-Linux-$(uname -m).sh -f -b -p ${HOME}/conda
 RUN ${HOME}/conda/condabin/conda init
 
+RUN ${HOME}/conda/condabin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+RUN ${HOME}/conda/condabin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
 ## Use a different solver to avoid conda hanging.
 RUN ${HOME}/conda/condabin/conda update conda
 RUN ${HOME}/conda/condabin/conda install -n base conda-build conda-libmamba-solver
