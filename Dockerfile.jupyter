@@ -1,4 +1,4 @@
-FROM openjdk:17-slim
+FROM eclipse-temurin:17-jdk-jammy
 
 ##
 ## This Dockerfile is specifically designed to be run with the API
@@ -75,7 +75,7 @@ WORKDIR ${HOME}/SysML-v2-Release-${RELEASE}/install/jupyter
 ## This is the path that `conda init` creates but `conda init` has no
 ## effect here, so set the `PATH` by hand, otherwise `install.sh` will
 ## not work.
-ENV PATH="${HOME}/conda/bin:${HOME}/conda/condabin:/usr/local/openjdk-17/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ENV PATH="${HOME}/conda/bin:${HOME}/conda/condabin:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 ## Install terminal notebook editor, see https://github.com/joouha/euporie
 RUN pip install euporie
