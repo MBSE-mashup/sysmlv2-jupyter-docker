@@ -1,0 +1,98 @@
+# Example: OpenShift deployment with route and persistence
+# Usage: helm install sysml-jupyter ./helm -f helm/examples/openshift-production.yaml
+
+replicaCount: 1
+
+image:
+  registry: quay.io
+  repository: jupyter/minimal-notebook
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+env:
+  - name: JUPYTER_TOKEN
+    value: "banana4ever"
+
+
+# OpenShift will override these UIDs/GIDs, but these are good defaults
+podSecurityContext:
+  runAsNonRoot: true
+  # runAsUser: 1010
+  runAsGroup: 100
+  # fsGroup: 0
+  # seccompProfile:
+  #   type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Resources for production workload
+resources:
+  requests:
+    cpu: 1000m
+    memory: 1Gi
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+
+# Enable persistence for notebooks
+persistence:
+  enabled: true
+  storageClassName: ""  # Use default storage class, or specify e.g., "standard" or "fast"
+  accessMode: ReadWriteOnce
+  size: 20Gi
+  mountPath: /home/jovyan/work
+
+# Enable OpenShift Route
+route:
+  enabled: true
+  host: ""  # Change to your OpenShift domain
+  tls:
+    enabled: true
+    termination: edge
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /lab
+    port: 8888
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /lab
+    port: 8888
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  timeoutSeconds: 3
+  failureThreshold: 2
+
+# Optional: Node affinity for specific nodes
+nodeSelector: {}
+  # node.kubernetes.io/instance-type: "standard"
+
+# Optional: Pod tolerations for tainted nodes
+tolerations: []
+  # - key: "dedicated"
+  #   operator: "Equal"
+  #   value: "jupyter"
+  #   effect: "NoSchedule"
+
+# Optional: Autoscaling
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
