@@ -1,4 +1,4 @@
-FROM openjdk:17-slim
+FROM eclipse-temurin:17-jdk-jammy
 
 ##
 ## This Dockerfile is specifically designed to be run with the API
@@ -61,6 +61,9 @@ RUN mkdir ${HOME}/conda
 RUN ${HOME}/Miniconda3-latest-Linux-$(uname -m).sh -f -b -p ${HOME}/conda
 RUN ${HOME}/conda/condabin/conda init
 
+RUN ${HOME}/conda/condabin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+RUN ${HOME}/conda/condabin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
 ## Use a different solver to avoid conda hanging.
 RUN ${HOME}/conda/condabin/conda update conda
 RUN ${HOME}/conda/condabin/conda install -n base conda-build conda-libmamba-solver
@@ -75,7 +78,7 @@ WORKDIR ${HOME}/SysML-v2-Release-${RELEASE}/install/jupyter
 ## This is the path that `conda init` creates but `conda init` has no
 ## effect here, so set the `PATH` by hand, otherwise `install.sh` will
 ## not work.
-ENV PATH="${HOME}/conda/bin:${HOME}/conda/condabin:/usr/local/openjdk-17/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ENV PATH="${HOME}/conda/bin:${HOME}/conda/condabin:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 ## Install terminal notebook editor, see https://github.com/joouha/euporie
 RUN pip install euporie

@@ -1,0 +1,21 @@
+# Example: Basic Kubernetes deployment with default values
+# Usage: helm install sysml-jupyter ./helm -f helm/examples/kubernetes-basic.yaml
+
+replicaCount: 1
+
+image:
+  registry: quay.io
+  repository: jupyter/minimal-notebook
+  tag: "latest"
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+
+service:
+  type: ClusterIP
+  port: 8888

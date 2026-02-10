@@ -1,0 +1,67 @@
+ARG REGISTRY="quay.io"
+ARG OWNER="jupyter"
+ARG IMAGENAME="minimal-notebook"
+ARG TAG="latest"
+FROM "${REGISTRY}/${OWNER}/${IMAGENAME}:${TAG}"
+
+RUN python --version
+RUN jupyter --version
+USER root
+# Update Ubuntu packages
+RUN apt-get update -y
+
+run apt list -a openjdk* 
+run apt-cache search openjdk
+
+run apt list -a nodejs* 
+run apt-cache search nodejs
+
+run apt-get install -y nodejs
+
+run nodejs --version
+# run apt-get install -y npm
+# run npm --version
+
+
+run apt-get install -y openjdk-21-jre-headless
+RUN java --version
+
+# set JAVA_VERSION
+ARG JAVA_VERSION=openjdk-21-jre-headless
+
+# Install Java
+RUN apt-get install -y $JAVA_VERSION
+# RUN apt-get install default-jre-headless
+USER ${NB_UID}
+RUN java --version
+
+ARG RELEASE=2024-11
+# RUN wget -q https://github.com/Systems-Modeling/SysML-v2-Release/archive/refs/tags/${RELEASE}.tar.gz -O ${RELEASE}.tar.gz
+
+# ADD https://github.com/Systems-Modeling/SysML-v2-Release/archive/refs/tags/${RELEASE}.tar.gz ./
+RUN wget -q https://github.com/Systems-Modeling/SysML-v2-Release/archive/refs/tags/${RELEASE}.tar.gz -O ${RELEASE}.tar.gz
+RUN tar xzf ${RELEASE}.tar.gz
+workdir SysML-v2-Release-2024-11/install/jupyter/
+run cat install.sh
+# run ./install.sh
+run jupyter kernelspec list
+run conda install jupyter-sysml-kernel
+run jupyter kernelspec list
+run jupyter labextension list
+# installing the labextension seems to require nodejs >= 20
+run nodejs --version
+run conda install nodejs
+run find /home/jovyan/.local/
+run jupyter kernelspec list
+run jupyter labextension list
+run npm install @systems-modeling/jupyterlab-sysml
+run find /home/jovyan/.local/
+run jupyter kernelspec list
+run jupyter labextension list
+ENV JUPYTER_RUNTIME_DIR=/home/jovyan/work
+run jupyter labextension install "@systems-modeling/jupyterlab-sysml@0.55.0"
+run find /home/jovyan/.local/
+run jupyter kernelspec list
+run jupyter labextension list
+workdir /home/jovyan/work
+ENV JUPYTER_DATA_DIR="/home/jovyan/work"
