@@ -1,0 +1,63 @@
+# Example: High Availability deployment with custom image and autoscaling
+# Usage: helm install sysml-jupyter ./helm -f helm/examples/ha-custom-image.yaml
+
+replicaCount: 2
+
+image:
+  registry: docker.io
+  repository: your-org/sysml-jupyter-custom
+  tag: "2025-12"
+  pullPolicy: IfNotPresent
+
+# Pull secrets for private registries (if needed)
+imagePullSecrets: []
+  # - name: regcred
+
+resources:
+  requests:
+    cpu: 2000m
+    memory: 2Gi
+  limits:
+    cpu: 4000m
+    memory: 4Gi
+
+# Persistence for shared notebooks
+persistence:
+  enabled: true
+  storageClassName: "fast-ssd"  # Use your high-performance storage class
+  accessMode: ReadWriteOnce
+  size: 50Gi
+  mountPath: /home/jovyan/work
+
+# OpenShift Route with TLS
+route:
+  enabled: true
+  host: "sysml-jupyter-prod.apps.example.com"
+  tls:
+    enabled: true
+    termination: reencrypt  # More secure for production
+
+# Autoscaling based on CPU
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 75
+
+# Pod affinty - spread across nodes
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - sysml-jupyter
+        topologyKey: kubernetes.io/hostname
+
+# Node selection (optional)
+nodeSelector:
+  workload: compute

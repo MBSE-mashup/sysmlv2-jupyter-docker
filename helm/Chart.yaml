@@ -1,0 +1,13 @@
+apiVersion: v2
+name: sysml-jupyter
+description: A Helm chart for deploying SysML v2 Jupyter Notebook on Kubernetes/OpenShift
+type: application
+version: 1.0.0
+appVersion: "latest"
+keywords:
+  - jupyter
+  - sysml
+  - notebook
+maintainers:
+  - name: MBSE Mashup Team
+home: https://github.com/OMG-SysML-v2
