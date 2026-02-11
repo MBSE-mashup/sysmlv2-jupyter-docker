@@ -47,7 +47,13 @@ run cat install.sh
 run jupyter kernelspec list
 run conda install jupyter-sysml-kernel
 run jupyter kernelspec list
-run jupyter labextension list
+run cat /opt/conda/share/jupyter/kernels/sysml/kernel.json
+# Remove setting of env variable ISYSML_API_BASE_PATH in kernel.json by removing the entire 'env' section.
+# According to
+# https://jupyter-client.readthedocs.io/en/latest/kernels.html#kernel-specs the
+# env section is optional and overrides environment variables
+run echo '[{ "op": "remove", "path":"/env"}]' | jsonpatch --in-place --indent 4 /opt/conda/share/jupyter/kernels/sysml/kernel.json
+run cat /opt/conda/share/jupyter/kernels/sysml/kernel.json
 # installing the labextension seems to require nodejs >= 20
 run nodejs --version
 run conda install nodejs
