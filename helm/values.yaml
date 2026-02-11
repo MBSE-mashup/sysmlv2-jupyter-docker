@@ -1,22 +1,27 @@
-# Example: OpenShift deployment with route and persistence
-# Usage: helm install sysml-jupyter ./helm -f helm/examples/openshift-production.yaml
+# Default values for sysml-jupyter Helm chart
+# This is a YAML-formatted file for Kubernetes/OpenShift values
 
 replicaCount: 1
 
 image:
-  registry: quay.io
-  repository: jupyter/minimal-notebook
-  tag: "latest"
+  registry: docker.io
+  repository: mbsemashup/sysmlv2-jupyter
   pullPolicy: IfNotPresent
+  tag: "latest"
 
-env:
-  - name: JUPYTER_TOKEN
-    value: "banana4ever"
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
 
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
 
-# OpenShift will override these UIDs/GIDs, but these are good defaults
+podAnnotations: {}
+
 podSecurityContext:
-  runAsNonRoot: true
+  # runAsNonRoot: true
   # runAsUser: 1010
   runAsGroup: 100
   # fsGroup: 0
@@ -30,24 +35,86 @@ securityContext:
       - ALL
   readOnlyRootFilesystem: false
 
-serviceAccount:
-  create: true
+service:
+  type: ClusterIP
+  port: 8888
+  targetPort: 8888
   annotations: {}
-  name: ""
 
-# Resources for production workload
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: jupyter.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
 resources:
-  requests:
-    cpu: 1000m
-    memory: 1Gi
   limits:
     cpu: 2000m
     memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
 
-# Enable persistence for notebooks
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Persistent storage for notebooks and data
 persistence:
-  enabled: true
-  storageClassName: ""  # Use default storage class, or specify e.g., "standard" or "fast"
+  enabled: false
+  storageClassName: ""
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  mountPath: /home/jovyan/work
+
+# JupyterLab environment variables
+env:
+  - name: JUPYTER_ENABLE_LAB
+    value: "yes"
+
+# Command to run
+command:
+  - "start-notebook.sh"
+
+# Args for the command
+args:
+  - "--ip=0.0.0.0"
+  - "--port=8888"
+  - "--no-browser"
+  - "--allow-root"
+
+# Liveness probe
+livenessProbe:
+  httpGet:
+    path: /lab
+    port: 8888
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Readiness probe
+readinessProbe:
+  httpGet:
+    path: /lab
+    port: 8888
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 2
   accessMode: ReadWriteOnce
   size: 20Gi
   mountPath: /home/jovyan/work
