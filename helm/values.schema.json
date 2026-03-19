@@ -1,0 +1,440 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "SysML v2 Jupyter Helm Chart Configuration Schema",
+  "description": "Configuration schema for the SysML v2 Jupyter Helm chart",
+  "type": "object",
+  "required": ["replicaCount", "image"],
+  "properties": {
+    "replicaCount": {
+      "type": "integer",
+      "description": "Number of pod replicas",
+      "minimum": 1,
+      "default": 2
+    },
+    "strategy": {
+      "type": "object",
+      "description": "Deployment strategy configuration. Use Recreate for PVC-based deployments",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Strategy type: Recreate (for PVC deployments) or RollingUpdate",
+          "enum": ["Recreate", "RollingUpdate"],
+          "default": "Recreate"
+        },
+        "rollingUpdate": {
+          "type": "object",
+          "description": "RollingUpdate strategy settings (only used if type is RollingUpdate)",
+          "properties": {
+            "maxSurge": {
+              "type": "integer",
+              "description": "Maximum number of pods that can be created over desired replicas",
+              "default": 1,
+              "minimum": 0
+            },
+            "maxUnavailable": {
+              "type": "integer",
+              "description": "Maximum number of pods that can be unavailable during update",
+              "default": 0,
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "description": "Image configuration",
+      "properties": {
+        "registry": {
+          "type": "string",
+          "description": "Container image registry",
+          "default": "docker.io"
+        },
+        "repository": {
+          "type": "string",
+          "description": "Image repository name",
+          "default": "mbsemashup/sysmlv2-jupyter"
+        },
+        "tag": {
+          "type": "string",
+          "description": "Image tag or version. Leave empty to use Chart.appVersion for reproducibility",
+          "default": ""
+        },
+        "pullPolicy": {
+          "type": "string",
+          "description": "Image pull policy",
+          "enum": ["IfNotPresent", "Always", "Never"],
+          "default": "IfNotPresent"
+        }
+      },
+      "required": ["registry", "repository", "pullPolicy"]
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "description": "Image pull secrets for private registries",
+      "default": []
+    },
+    "nameOverride": {
+      "type": "string",
+      "description": "Override deployment name",
+      "default": ""
+    },
+    "fullnameOverride": {
+      "type": "string",
+      "description": "Override full deployment name",
+      "default": ""
+    },
+    "serviceAccount": {
+      "type": "object",
+      "description": "Service account configuration",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "description": "Create a new ServiceAccount",
+          "default": true
+        },
+        "annotations": {
+          "type": "object",
+          "description": "ServiceAccount annotations",
+          "default": {}
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of existing ServiceAccount",
+          "default": ""
+        }
+      }
+    },
+    "podAnnotations": {
+      "type": "object",
+      "description": "Pod annotations",
+      "default": {}
+    },
+    "podSecurityContext": {
+      "type": "object",
+      "description": "Pod-level security context",
+      "properties": {
+        "runAsNonRoot": {
+          "type": "boolean",
+          "description": "Run container as non-root user",
+          "default": true
+        },
+        "runAsUser": {
+          "type": "integer",
+          "description": "User ID to run container as",
+          "default": 1010
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "description": "Group ID for the container",
+          "default": 100
+        },
+        "fsGroup": {
+          "type": "integer",
+          "description": "Filesystem group ID",
+          "default": 100
+        }
+      }
+    },
+    "securityContext": {
+      "type": "object",
+      "description": "Container-level security context",
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "type": "boolean",
+          "description": "Prevent privilege escalation",
+          "default": false
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean",
+          "description": "Use read-only root filesystem",
+          "default": false
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "drop": {
+              "type": "array",
+              "description": "Drop Linux capabilities",
+              "default": ["ALL"]
+            }
+          }
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "description": "Service configuration",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Service type",
+          "enum": ["ClusterIP", "NodePort", "LoadBalancer"],
+          "default": "ClusterIP"
+        },
+        "port": {
+          "type": "integer",
+          "description": "Service port",
+          "default": 8888,
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "targetPort": {
+          "type": "integer",
+          "description": "Container port",
+          "default": 8888,
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Service annotations",
+          "default": {}
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "description": "Ingress configuration (for non-OpenShift)",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable Ingress",
+          "default": false
+        },
+        "className": {
+          "type": "string",
+          "description": "Ingress class name",
+          "default": ""
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Ingress annotations",
+          "default": {}
+        },
+        "hosts": {
+          "type": "array",
+          "description": "Ingress hosts and paths"
+        },
+        "tls": {
+          "type": "array",
+          "description": "TLS configuration",
+          "default": []
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "description": "Container resource requests and limits",
+      "properties": {
+        "limits": {
+          "type": "object",
+          "description": "Resource limits",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "CPU limit",
+              "default": "2000m"
+            },
+            "memory": {
+              "type": "string",
+              "description": "Memory limit",
+              "default": "2Gi"
+            }
+          }
+        },
+        "requests": {
+          "type": "object",
+          "description": "Resource requests",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "CPU request",
+              "default": "500m"
+            },
+            "memory": {
+              "type": "string",
+              "description": "Memory request",
+              "default": "512Mi"
+            }
+          }
+        }
+      }
+    },
+    "autoscaling": {
+      "type": "object",
+      "description": "Horizontal Pod Autoscaler configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable HPA",
+          "default": false
+        },
+        "minReplicas": {
+          "type": "integer",
+          "description": "Minimum replicas",
+          "default": 2,
+          "minimum": 1
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "description": "Maximum replicas",
+          "default": 5,
+          "minimum": 1
+        },
+        "targetCPUUtilizationPercentage": {
+          "type": "integer",
+          "description": "Target CPU utilization percentage",
+          "default": 80,
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "nodeSelector": {
+      "type": "object",
+      "description": "Node selector labels",
+      "default": {}
+    },
+    "tolerations": {
+      "type": "array",
+      "description": "Pod tolerations for tainted nodes",
+      "default": []
+    },
+    "affinity": {
+      "type": "object",
+      "description": "Pod affinity and anti-affinity rules",
+      "properties": {
+        "podAntiAffinity": {
+          "type": "object",
+          "description": "Pod anti-affinity for spreading replicas"
+        }
+      }
+    },
+    "podDisruptionBudget": {
+      "type": "object",
+      "description": "Pod Disruption Budget configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable PDB",
+          "default": true
+        },
+        "minAvailable": {
+          "type": "integer",
+          "description": "Minimum available replicas during disruption",
+          "default": 1,
+          "minimum": 1
+        }
+      }
+    },
+    "terminationGracePeriodSeconds": {
+      "type": "integer",
+      "description": "Grace period for graceful shutdown",
+      "default": 30,
+      "minimum": 0
+    },
+    "persistence": {
+      "type": "object",
+      "description": "Persistent storage configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable persistent storage",
+          "default": false
+        },
+        "storageClassName": {
+          "type": "string",
+          "description": "Storage class name",
+          "default": ""
+        },
+        "accessMode": {
+          "type": "string",
+          "description": "Access mode",
+          "enum": ["ReadWriteOnce", "ReadOnlyMany", "ReadWriteMany"],
+          "default": "ReadWriteOnce"
+        },
+        "size": {
+          "type": "string",
+          "description": "Persistent volume size",
+          "pattern": "^[0-9]+(Mi|Gi|Ti)$",
+          "default": "10Gi"
+        },
+        "mountPath": {
+          "type": "string",
+          "description": "Mount path in container",
+          "default": "/home/jovyan/work"
+        }
+      }
+    },
+    "env": {
+      "type": "array",
+      "description": "Environment variables",
+      "default": [
+        {
+          "name": "JUPYTER_ENABLE_LAB",
+          "value": "yes"
+        }
+      ]
+    },
+    "command": {
+      "type": "array",
+      "description": "Container command",
+      "default": ["start-notebook.sh"]
+    },
+    "args": {
+      "type": "array",
+      "description": "Container arguments",
+      "default": [
+        "--ip=0.0.0.0",
+        "--port=8888",
+        "--no-browser"
+      ]
+    },
+    "startupProbe": {
+      "type": "object",
+      "description": "Startup probe configuration"
+    },
+    "livenessProbe": {
+      "type": "object",
+      "description": "Liveness probe configuration"
+    },
+    "readinessProbe": {
+      "type": "object",
+      "description": "Readiness probe configuration"
+    },
+    "route": {
+      "type": "object",
+      "description": "OpenShift Route configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable OpenShift Route",
+          "default": true
+        },
+        "host": {
+          "type": "string",
+          "description": "Route hostname",
+          "default": ""
+        },
+        "tls": {
+          "type": "object",
+          "description": "TLS configuration",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable TLS",
+              "default": true
+            },
+            "termination": {
+              "type": "string",
+              "description": "TLS termination type",
+              "enum": ["edge", "reencrypt", "passthrough"],
+              "default": "edge"
+            }
+          }
+        }
+      }
+    }
+  }
+}

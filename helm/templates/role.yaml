@@ -1,0 +1,21 @@
+{{- if .Values.serviceAccount.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "sysml-jupyter.fullname" . }}
+  labels:
+    {{- include "sysml-jupyter.labels" . | nindent 4 }}
+rules:
+# Minimal permissions required for the SysML v2 Jupyter deployment
+# Add additional rules based on your application's needs
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
+# Add permissions for accessing ConfigMaps and Secrets if needed
+# - apiGroups: [""]
+#   resources: ["configmaps", "secrets"]
+#   verbs: ["get", "list"]
+{{- end }}

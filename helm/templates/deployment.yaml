@@ -8,6 +8,14 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
+  # Deployment strategy: Use Recreate for PVC deployments to avoid data consistency issues
+  strategy:
+    type: {{ .Values.strategy.type }}
+    {{- if eq .Values.strategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxSurge: {{ .Values.strategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.strategy.rollingUpdate.maxUnavailable }}
+    {{- end }}
   selector:
     matchLabels:
       {{- include "sysml-jupyter.selectorLabels" . | nindent 6 }}
@@ -27,6 +35,8 @@ spec:
       serviceAccountName: {{ include "sysml-jupyter.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      # Grace period for graceful shutdown
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       containers:
       - name: {{ .Chart.Name }}
         securityContext:
@@ -47,6 +57,10 @@ spec:
         {{- end }}
         {{- with .Values.args }}
         args:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- with .Values.startupProbe }}
+        startupProbe:
           {{- toYaml . | nindent 12 }}
         {{- end }}
         {{- with .Values.livenessProbe }}

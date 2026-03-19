@@ -1,165 +1,261 @@
 # Default values for sysml-jupyter Helm chart
-# This is a YAML-formatted file for Kubernetes/OpenShift values
+# This is a YAML-formatted file for Kubernetes/OpenShift deployment
 
+# Number of replicas for the deployment. Use >= 2 for production deployments
 replicaCount: 1
 
+# Deployment strategy for updates
+# Important: Since this deployment uses persistent storage (PVC), use Recreate strategy
+# to avoid data consistency issues. RollingUpdate would try to run old and new versions
+# simultaneously on the same PVC, which can cause conflicts.
+strategy:
+  # Use "Recreate" when persistence is enabled (default)
+  # Use "RollingUpdate" only if persistence is disabled
+  type: Recreate
+  # RollingUpdate settings (only applicable if type is RollingUpdate)
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+# Image configuration for the SysML v2 Jupyter container
 image:
+  # Container image registry
   registry: docker.io
+  # Image repository name
   repository: mbsemashup/sysmlv2-jupyter
+  # Image pull policy: IfNotPresent, Always, or Never
+  # Use IfNotPresent to leverage cached images and reduce registry load
   pullPolicy: IfNotPresent
+  # Image tag: defaults to Chart.appVersion for reproducibility
+  # Leave empty to use appVersion, or override with specific tag (e.g., "v1.0.0")
+  # Avoid using "latest" in production; use specific versions for reproducibility
   tag: "latest"
 
+# Image pull secrets for private registries
 imagePullSecrets: []
+
+# Namespace-scoped resource name override
 nameOverride: ""
+
+# Fully qualified app name override
 fullnameOverride: ""
 
+# Service account configuration
 serviceAccount:
+  # Create a ServiceAccount for the deployment
   create: true
+  # Annotations to add to the ServiceAccount
   annotations: {}
+  # Name of existing ServiceAccount (if create is false)
   name: ""
 
+# Pod-level annotations (e.g., for monitoring or logging systems)
 podAnnotations: {}
 
+# Pod security context for all containers in the pod
 podSecurityContext:
-  # runAsNonRoot: true
+  # Run pod as non-root user (required for restricted SCCs)
+  runAsNonRoot: true
+  # User ID (adjust if image requires different UID)
   # runAsUser: 1010
+  # Group ID
   runAsGroup: 100
-  # fsGroup: 0
-  # seccompProfile:
-  #   type: RuntimeDefault
+  # Filesystem group for volume permissions
+  # fsGroup: 100
+  # Use RuntimeDefault seccomp profile for enhanced security
+  seccompProfile:
+    type: RuntimeDefault
 
+# Container-level security context
 securityContext:
+  # Prevent privilege escalation
   allowPrivilegeEscalation: false
+  # Drop all Linux capabilities, add back only what's needed
   capabilities:
     drop:
       - ALL
-  readOnlyRootFilesystem: false
+  # Use read-only root filesystem where possible
+  # Set to false only if application requires write access to /
+  # readOnlyRootFilesystem: false
 
+# Service configuration for exposing the deployment
 service:
+  # Service type: ClusterIP, NodePort, or LoadBalancer
   type: ClusterIP
+  # Service port number
   port: 8888
+  # Container port number
   targetPort: 8888
+  # Service annotations (e.g., for load balancer configuration)
   annotations: {}
 
+# Kubernetes Ingress configuration (for non-OpenShift clusters)
 ingress:
+  # Enable Ingress (disable if using OpenShift Route instead)
   enabled: false
+  # Ingress class name (e.g., "nginx", "istio")
   className: ""
+  # Annotations for the Ingress resource
   annotations: {}
+  # Hostnames and paths for the Ingress
   hosts:
     - host: jupyter.example.com
       paths:
         - path: /
           pathType: Prefix
+  # TLS configuration
   tls: []
 
+# Resource requests and limits for proper scheduling and stability
 resources:
+  # Maximum resources the container can consume
   limits:
     cpu: 2000m
     memory: 2Gi
+  # Minimum resources guaranteed to the container
+  # Adjust these values based on your workload
   requests:
     cpu: 500m
     memory: 512Mi
 
+# Horizontal Pod Autoscaler configuration
 autoscaling:
+  # Enable HPA for dynamic scaling
   enabled: false
+  # Minimum number of replicas
   minReplicas: 1
+  # Maximum number of replicas
   maxReplicas: 3
+  # Target CPU utilization percentage (0-100)
   targetCPUUtilizationPercentage: 80
+  # Optional: Target memory utilization percentage
+  # targetMemoryUtilizationPercentage: 80
 
+# Node selector to schedule pods on specific nodes
 nodeSelector: {}
+  # Example: node.kubernetes.io/instance-type: "standard"
 
+# Pod tolerations for nodes with taints
 tolerations: []
-
-affinity: {}
-
-# Persistent storage for notebooks and data
-persistence:
-  enabled: false
-  storageClassName: ""
-  accessMode: ReadWriteOnce
-  size: 10Gi
-  mountPath: /home/jovyan/work
-
-# JupyterLab environment variables
-env:
-  - name: JUPYTER_ENABLE_LAB
-    value: "yes"
-
-# Command to run
-command:
-  - "start-notebook.sh"
-
-# Args for the command
-args:
-  - "--ip=0.0.0.0"
-  - "--port=8888"
-  - "--no-browser"
-  - "--allow-root"
-
-# Liveness probe
-livenessProbe:
-  httpGet:
-    path: /lab
-    port: 8888
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 3
-
-# Readiness probe
-readinessProbe:
-  httpGet:
-    path: /lab
-    port: 8888
-  initialDelaySeconds: 10
-  periodSeconds: 5
-  timeoutSeconds: 3
-  failureThreshold: 2
-  accessMode: ReadWriteOnce
-  size: 20Gi
-  mountPath: /home/jovyan/work
-
-# Enable OpenShift Route
-route:
-  enabled: true
-  host: ""  # Change to your OpenShift domain
-  tls:
-    enabled: true
-    termination: edge
-
-# Health checks
-livenessProbe:
-  httpGet:
-    path: /lab
-    port: 8888
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 3
-
-readinessProbe:
-  httpGet:
-    path: /lab
-    port: 8888
-  initialDelaySeconds: 10
-  periodSeconds: 30
-  timeoutSeconds: 3
-  failureThreshold: 2
-
-# Optional: Node affinity for specific nodes
-nodeSelector: {}
-  # node.kubernetes.io/instance-type: "standard"
-
-# Optional: Pod tolerations for tainted nodes
-tolerations: []
+  # Example:
   # - key: "dedicated"
   #   operator: "Equal"
   #   value: "jupyter"
   #   effect: "NoSchedule"
 
-# Optional: Autoscaling
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 3
-  targetCPUUtilizationPercentage: 80
+# Pod affinity and anti-affinity rules for high availability
+# Use anti-affinity to spread replicas across different nodes
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - sysml-jupyter
+          topologyKey: kubernetes.io/hostname
+
+# Pod Disruption Budget for high availability during maintenance
+podDisruptionBudget:
+  # Enable PDB to ensure minimum availability during disruptions
+  enabled: true
+  # Minimum number of available replicas (or use minUnavailable for max disruptions)
+  minAvailable: 1
+
+# Grace period for graceful shutdown (seconds)
+terminationGracePeriodSeconds: 30
+
+# Persistent storage configuration for notebooks and data
+persistence:
+  # Enable persistent volume for data retention
+  enabled: true
+  # Storage class name (e.g., "standard", "fast", platform-specific)
+  storageClassName: ""
+  # Access mode: ReadWriteOnce, ReadOnlyMany, or ReadWriteMany
+  accessMode: ReadWriteOnce
+  # Persistent volume size
+  size: 10Gi
+  # Mount path within container
+  mountPath: /home/jovyan/work
+
+# Container environment variables
+env:
+  # Enable JupyterLab interface (instead of Jupyter Notebook)
+  - name: JUPYTER_ENABLE_LAB
+    value: "yes"
+  - name: JUPYTER_TOKEN
+    value: MBSEmashup4ever
+  - name: ISYSML_API_BASE_PATH
+    value: "<unset>"
+  # Optional: Set CPU affinity or other environment variables
+  # - name: MY_CUSTOM_VAR
+  #   value: "value"
+
+# Command to execute in the container
+command:
+  - "start-notebook.sh"
+
+# Arguments passed to the command
+# Note: Remove --allow-root when running as non-root user (runAsNonRoot: true)
+args:
+  - "--ip=0.0.0.0"
+  - "--port=8888"
+  - "--no-browser"
+
+# Startup probe to wait for application initialization
+# Disables other probes until successful
+startupProbe:
+  httpGet:
+    path: /lab
+    port: 8888
+  # Allow up to 5 minutes for startup (12 failures × 30 seconds)
+  initialDelaySeconds: 5
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 10
+  successThreshold: 1
+
+# Liveness probe to detect and restart dead/hung containers
+livenessProbe:
+  httpGet:
+    path: /lab
+    port: 8888
+  # Start checking after container is up and running
+  initialDelaySeconds: 60
+  # Check every 10 seconds
+  periodSeconds: 10
+  # Wait 5 seconds for response
+  timeoutSeconds: 5
+  # Restart after 3 consecutive failures
+  failureThreshold: 3
+
+# Readiness probe to control load balancing
+readinessProbe:
+  httpGet:
+    path: /lab
+    port: 8888
+  # Start checking after short delay
+  initialDelaySeconds: 10
+  # Check frequently to respond quickly to state changes
+  periodSeconds: 5
+  # Wait 3 seconds for response
+  timeoutSeconds: 3
+  # Remove from load balancer after 2 consecutive failures
+  failureThreshold: 2
+
+# OpenShift Route configuration (for OpenShift deployments)
+route:
+  # Enable OpenShift Route (set to false for plain Kubernetes with Ingress)
+  enabled: true
+  # Hostname for the route (e.g., sysml-jupyter.apps.example.com)
+  # Leave empty for auto-generated name
+  host: ""
+  # TLS configuration for secure access
+  tls:
+    # Enable TLS termination
+    enabled: true
+    # Termination type: edge, reencrypt, or passthrough
+    termination: edge

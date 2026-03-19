@@ -2,12 +2,21 @@ apiVersion: v2
 name: sysml-jupyter
 description: A Helm chart for deploying SysML v2 Jupyter Notebook on Kubernetes/OpenShift
 type: application
-version: 1.0.0
-appVersion: "latest"
+# Semantic versioning: MAJOR.MINOR.PATCH
+version: 0.8.0
+# Application version (should use semantic versioning, not 'latest')
+appVersion: "2024-11"
 keywords:
   - jupyter
   - sysml
   - notebook
+  - python
+  - kubernetes
 maintainers:
   - name: MBSE Mashup Team
+    email: team@mbse-mashup.example.com
 home: https://github.com/OMG-SysML-v2
+sources:
+  - https://github.com/OMG-SysML-v2/jupyter
+# Kubernetes API version compatibility
+kubeVersion: ">=1.19.0"
