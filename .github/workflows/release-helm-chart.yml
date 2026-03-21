@@ -4,8 +4,9 @@ on:
   push:
     branches:
       - MBSEmashup-helm
-    paths:
-      - 'helm/**'
+      - main
+    # paths:
+    #   - 'helm/**'
   release:
     types: [published]
 
