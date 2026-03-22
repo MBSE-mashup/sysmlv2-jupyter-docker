@@ -35,13 +35,13 @@ RUN apt-get install -y $JAVA_VERSION
 USER ${NB_UID}
 RUN java --version
 
-ARG RELEASE=2024-11
+ARG RELEASE=2026-02
 # RUN wget -q https://github.com/Systems-Modeling/SysML-v2-Release/archive/refs/tags/${RELEASE}.tar.gz -O ${RELEASE}.tar.gz
 
 # ADD https://github.com/Systems-Modeling/SysML-v2-Release/archive/refs/tags/${RELEASE}.tar.gz ./
 RUN wget -q https://github.com/Systems-Modeling/SysML-v2-Release/archive/refs/tags/${RELEASE}.tar.gz -O ${RELEASE}.tar.gz
 RUN tar xzf ${RELEASE}.tar.gz
-workdir SysML-v2-Release-2024-11/install/jupyter/
+workdir SysML-v2-Release-${RELEASE}/install/jupyter/
 run cat install.sh
 # run ./install.sh
 run jupyter kernelspec list
