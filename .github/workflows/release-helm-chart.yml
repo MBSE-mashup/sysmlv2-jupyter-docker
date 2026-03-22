@@ -45,4 +45,7 @@ jobs:
       - name: Push to GHCR
         run: |
           cd helm
+          echo github.actor ${{ github.actor }}
+          echo GITHUB_TOKEN ${{ secrets.GITHUB_TOKEN }}
+          echo github.repository_owner ${{ github.repository_owner }}
           helm push sysml-jupyter-*.tgz oci://ghcr.io/${{ github.repository_owner }}/sysml-jupyter
