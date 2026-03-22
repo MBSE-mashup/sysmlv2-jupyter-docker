@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - rootless-container
+      - MBSEmashup-container
   pull_request:
     branches:
       - main
